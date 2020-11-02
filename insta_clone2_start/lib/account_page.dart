@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AccountPage extends StatelessWidget {
-//  final FirebaseUser user;
+  final User user;
 
-//  AccountPage(this.user);
+  AccountPage(this.user);
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
@@ -44,7 +44,7 @@ class AccountPage extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => print('이미지 클릭'),
                     child: CircleAvatar(
-                      backgroundImage: NetworkImage(''),
+                      backgroundImage: NetworkImage(user.photoURL),
                     ),
                   ),
                 ),
@@ -81,7 +81,7 @@ class AccountPage extends StatelessWidget {
               padding: EdgeInsets.all(8.0),
             ),
             Text(
-              '더미 유저',
+              user.displayName,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             )

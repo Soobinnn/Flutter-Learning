@@ -1,14 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class DetailPostPage extends StatelessWidget {
-  final document = {
-    'userPhotoUrl': '',
-    'email': 'test@test.com',
-    'displayName': '더미',
-  };
-//  final FirebaseUser user;
+  final DocumentSnapshot document;
+  final User user;
 
-//  DetailPostPage({this.document, this.user});
+  DetailPostPage(this.document, this.user);
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +63,7 @@ class DetailPostPage extends StatelessWidget {
             ),
           ),
           Hero(
-            tag: document['photoUrl'],
+            tag: document.id,
             child: Image.network(
               document['photoUrl'],
               fit: BoxFit.cover,

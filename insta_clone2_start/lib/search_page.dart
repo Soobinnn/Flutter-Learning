@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,9 +7,9 @@ import 'create_page.dart';
 import 'detail_post_page.dart';
 
 class SearchPage extends StatelessWidget {
-//  final FirebaseUser user;
+  final User user;
 
-//  SearchPage(this.user);
+  SearchPage(this.user);
 
   @override
   Widget build(BuildContext context) {
@@ -30,16 +31,24 @@ class SearchPage extends StatelessWidget {
   Widget _buildBody(context) {
     print('search_page created');
     return Scaffold(
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 1.0,
-            mainAxisSpacing: 1.0,
-            crossAxisSpacing: 1.0),
-        itemCount: 3,
-        itemBuilder: (BuildContext context, int index) {
-          return _buildListItem();
-        },
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('post').snapshots(),
+        builder: (context, snapshot) {
+          if(!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator(),);
+          }
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.0,
+                mainAxisSpacing: 1.0,
+                crossAxisSpacing: 1.0),
+            itemCount: snapshot.data.docs.length,
+            itemBuilder: (BuildContext context, int index) {
+              return _buildListItem(context,snapshot.data.docs[index]);
+            },
+          );
+        }
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blueAccent,
@@ -47,16 +56,29 @@ class SearchPage extends StatelessWidget {
         onPressed: () {
           print('눌림');
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (BuildContext context) => CreatePage()));
+              builder: (BuildContext context) => CreatePage(user)));
         },
       ),
     );
   }
 
-  Widget _buildListItem() {
-    return Image.network(
-      '',
-      fit: BoxFit.cover,
+  Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
+    return Hero(
+      tag: document.id,
+      child: Material(
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DetailPostPage(document, user)),
+            );
+          },
+          child: Image.network(
+            document['photoUrl'],
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
     );
   }
 }
