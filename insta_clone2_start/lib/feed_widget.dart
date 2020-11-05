@@ -1,18 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'comment_page.dart';
 
 class FeedWidget extends StatefulWidget {
-  final document = {
-    'userPhotoUrl': '',
-    'email': 'test@test.com',
-    'displayName': '더미',
-    'comment': 100,
-  };
+  final DocumentSnapshot document;
+  // var document = {
+  //   'userPhotoUrl': '',
+  //   'email': 'test@test.com',
+  //   'displayName': '더미',
+  //   'comment': 100,
+  // };
 
-//  final FirebaseUser user;
+ final User user;
 
-//  FeedWidget(this.document, this.user);
+ FeedWidget(this.document, this.user);
 
   @override
   _FeedWidgetState createState() => _FeedWidgetState();
@@ -29,7 +32,7 @@ class _FeedWidgetState extends State<FeedWidget> {
 
   @override
   Widget build(BuildContext context) {
-    var comment = widget.document['comment'] ?? 0;
+    var commentCount = widget.document['comment'] ?? 0;
     return Column(
       children: <Widget>[
         ListTile(
@@ -52,7 +55,17 @@ class _FeedWidgetState extends State<FeedWidget> {
           leading: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.favorite_border),
+              widget.document['likedUsers']
+                  ?.contains(widget.user.email) ?? false
+                ? GestureDetector(
+                  onTap: _unlike,
+                  child: Icon(Icons.favorite, color: Colors.red,)
+                )
+                : GestureDetector(
+                  onTap: _like,
+                  child: Icon(Icons.favorite_border)
+                )
+              ,
               SizedBox(
                 width: 8.0,
               ),
@@ -71,7 +84,7 @@ class _FeedWidgetState extends State<FeedWidget> {
               width: 16.0,
             ),
             Text(
-              '좋아요 100개',
+              '좋아요 ${widget.document['likedUsers']?.length ?? 0}개',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.0),
             ),
           ],
@@ -97,15 +110,16 @@ class _FeedWidgetState extends State<FeedWidget> {
         SizedBox(
           height: 8.0,
         ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CommentPage(widget.document),
-              ),
-            );
-          },
+        if(commentCount > 0)
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CommentPage(widget.document),
+                ),
+              );
+            },
           child: Padding(
             padding: const EdgeInsets.only(left: 16.0),
             child: Column(
@@ -114,12 +128,12 @@ class _FeedWidgetState extends State<FeedWidget> {
                 Row(
                   children: <Widget>[
                     Text(
-                      '댓글 $comment개 모두 보기',
+                      '댓글 $commentCount개 모두 보기',
                       style: TextStyle(color: Colors.grey[500]),
                     ),
                   ],
                 ),
-                Text(widget.document['lastComment']),
+                Text(widget.document['lastComment'] ?? ''),
               ],
             ),
           ),
@@ -150,13 +164,62 @@ class _FeedWidgetState extends State<FeedWidget> {
 
   // 좋아요
   void _like() {
+    // 기존 좋아요 리스트를 복사
+    final List likedUsers =
+        List<String>.from(widget.document['likedUsers'] ?? []);
+
+    // 나를 추가
+    likedUsers.add(widget.user.email);
+
+    final updateData = {
+      'likedUsers': likedUsers,
+    };
+
+    FirebaseFirestore.instance.collection('post')
+      .doc(widget.document.id)
+      .update(updateData);
   }
 
   // 좋아요 취소
   void _unlike() {
+    // 기존 좋아요 리스트를 복사
+    final List likedUsers =
+    List<String>.from(widget.document['likedUsers'] ?? []);
+
+    // 나를 추가
+    likedUsers.remove(widget.user.email);
+
+    final updateData = {
+      'likedUsers': likedUsers,
+    };
+
+    FirebaseFirestore.instance.collection('post')
+        .doc(widget.document.id)
+        .update(updateData);
   }
 
   // 댓글 작성
   void _writeComment(String text) {
+    final data = {
+      'writer': widget.user.email,
+      'comment': text,
+    };
+
+    FirebaseFirestore.instance
+      .collection('post')
+      .doc(widget.document.id)
+      .collection('comment')
+      .add(data);
+
+    // 마지막 댓글과 댓글 수 갱신
+    final updateData = {
+      'lastComment': text,
+      'commentCount': (widget.document['commentCount'] ?? 0) + 1,
+    };
+
+    FirebaseFirestore.instance
+      .collection('post')
+      .doc(widget.document.id)
+      .update(updateData);
   }
 }
