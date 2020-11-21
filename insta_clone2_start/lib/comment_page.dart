@@ -6,17 +6,6 @@ class CommentPage extends StatelessWidget {
 
   CommentPage(this.document);
 
-  // final dummyItems = [
-  //   {
-  //     'writer': '아무개',
-  //     'comment': '더미 댓글',
-  //   },
-  //   {
-  //     'writer': '아무개',
-  //     'comment': '더미 댓글',
-  //   },
-  // ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
